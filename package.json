@@ -1,0 +1,36 @@
+{
+  "name": "koishi-plugin-dispose-root",
+  "description": "一键销毁根上下文",
+  "version": "2.0.0",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "dist",
+    "src"
+  ],
+  "koishi": {
+    "services": {
+      "optional": "notifier"
+    },
+    "description": {
+      "zh": "清除 Koishi (的副作用)",
+      "en": "Clean up (every side-effects of) Koishi"
+    }, "insecure": true
+  },
+  "license": "MIT",
+  "keywords": [
+    "chatbot",
+    "koishi",
+    "plugin"
+  ],
+  "peerDependencies": {
+    "@koishijs/plugin-notifier": "^1.1.0",
+    "koishi": "^4.16.4"
+  },
+  "peerDependenciesMeta": {
+    "@koishijs/plugin-notifier": {
+      "optional": true
+    }
+  }
+}
