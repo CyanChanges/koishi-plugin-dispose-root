@@ -13,7 +13,7 @@ This is [Cordis](https://github.com/shigma/cordis),
 You can write disposable plugin stupidly simple,
 It is so easy to use and powerful.
 
-我们在构想在此插件内使用所有 Koishi(Cordia) 的 Feature，作为一个 Koishi 完整用例的 Koishi 用户教程
+我们在构想在此插件内使用所有 Koishi(Cordis) 的 Feature，作为一个 Koishi 完整用例的 Koishi 用户教程
 
 ## Koishi “用户群” 是什么
 你可能认为，Koishi “用户群”（以下简称“用户群”）是为 Koishi “用户” 讨论交流 Koishi 而创建的，或许创建者原本的意图是这样的，但是现在的“用户群”却似乎没有很好的帮助“用户”
