@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-dispose-root",
   "description": "一键销毁根上下文",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
@@ -9,6 +9,13 @@
     "dist",
     "src"
   ],
+  "homepage": "https://github.com/CyanChanges/koishi-plugin-dispose-root",
+  "repository": {
+    "url": "https://github.com/CyanChanges/koishi-plugin-dispose-root"
+  },
+  "bugs": {
+    "url": "https://github.com/CyanChanges/koishi-plugin-dispose-root/issues"
+  },
   "koishi": {
     "services": {
       "optional": "notifier"
