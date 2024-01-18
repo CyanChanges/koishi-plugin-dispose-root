@@ -2,10 +2,20 @@ import { Context, Service } from "koishi";
 import { Get } from 'cosmokit'
 import NotifierService from "@koishijs/plugin-notifier";
 import type {} from './disposer'
+import { MouseEventHandler } from "react";
 
 declare module 'koishi' {
   interface Context {
     'disposer.notifier': DisposerNotifier;
+  }
+}
+
+declare global {
+  export namespace React {
+    export interface DOMAttributes<T> {
+      // @ts-ignore
+      onclick?: MouseEventHandler<T> | undefined
+    }
   }
 }
 
@@ -37,7 +47,7 @@ export class DisposerNotifier extends Service {
     this.notifier.update(<>
       <p><small>kp-</small>dispose-root is ready!</p>
       <p>
-        <button onClick={() => this.handle()}>Dispose now!</button>
+        <button onclick={() => this.handle()}>Dispose now!</button>
       </p>
     </>);
   }

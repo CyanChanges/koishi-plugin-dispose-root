@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-dispose-root",
   "description": "一键销毁根上下文",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
