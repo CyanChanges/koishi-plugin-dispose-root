@@ -4,8 +4,8 @@
     "outDir": "lib",
     "target": "es2022",
     "module": "commonjs",
-    "sourceMap": true,
     "declaration": true,
+    "emitDeclarationOnly": true,
     "composite": true,
     "incremental": true,
     "skipLibCheck": true,
@@ -13,10 +13,6 @@
     "moduleResolution": "node",
     "jsx": "react-jsx",
     "jsxImportSource": "@satorijs/element",
-    "types": [
-      "node",
-      "yml-register/types"
-    ]
   },
   "include": [
     "src"

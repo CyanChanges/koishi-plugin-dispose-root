@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-dispose-root",
   "description": "一键销毁根上下文",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
@@ -9,6 +9,9 @@
     "dist",
     "src"
   ],
+  "scripts": {
+    "build": "tsc -b"
+  },
   "homepage": "https://github.com/CyanChanges/koishi-plugin-dispose-root",
   "repository": {
     "url": "https://github.com/CyanChanges/koishi-plugin-dispose-root"
@@ -23,7 +26,8 @@
     "description": {
       "zh": "清除 Koishi (的副作用)",
       "en": "Clean up (every side-effects of) Koishi"
-    }, "insecure": true
+    },
+    "insecure": true
   },
   "license": "MIT",
   "keywords": [
@@ -31,8 +35,13 @@
     "koishi",
     "plugin"
   ],
+  "devDependencies": {
+    "@koishijs/client": "^5.25.6",
+    "@koishijs/plugin-notifier": "^1.1.1",
+    "@types/react": "^18.2.48"
+  },
   "peerDependencies": {
-    "@koishijs/plugin-notifier": "^1.1.0",
+    "@koishijs/console": "^5.25.6",
     "koishi": "^4.16.4"
   },
   "peerDependenciesMeta": {

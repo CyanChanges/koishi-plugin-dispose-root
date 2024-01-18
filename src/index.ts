@@ -1,6 +1,7 @@
-import {Context, Schema} from 'koishi';
+import { Context, Schema } from 'koishi';
 import {} from '@koishijs/plugin-notifier';
-import {Disposer} from "./disposer";
+import { Disposer } from "./disposer";
+import { resolve } from 'path'
 
 export const name = 'dispose-root';
 
@@ -25,7 +26,7 @@ export interface Config {
   disposer: Disposer.Config;
 }
 
-export const Config: Schema<Config> = Schema.object({disposer: Disposer.Config});
+export const Config: Schema<Config> = Schema.object({ disposer: Disposer.Config });
 
 export function apply(ctx: Context, config: Config) {
   const logger = ctx.logger('dispose-root');
@@ -33,4 +34,11 @@ export function apply(ctx: Context, config: Config) {
   logger.debug('dispose-root %c', 'apply')
 
   ctx.plugin(Disposer, config.disposer)
+
+  ctx.inject(['console'], (ctx) => {
+    ctx.console.addEntry({
+      dev: resolve(__dirname, '../client/index.ts'),
+      prod: resolve(__dirname, '../dist'),
+    })
+  })
 }

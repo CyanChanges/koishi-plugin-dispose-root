@@ -1,7 +1,9 @@
-import {enumAllEffects, keepVal} from "./utils";
-import {Lifecycle} from "cordis";
-import {Context, Schema, Service, ForkScope} from "koishi";
+import { asPromise, enumAllEffects, keepVal, rename } from "./utils";
+import { Lifecycle } from "cordis";
+import { Context, Schema, Service, ForkScope, Loader, Awaitable } from "koishi";
+import * as cordis from 'cordis';
 import DisposerNotifier from './notifier';
+import { promisify } from "node:util";
 
 declare module 'koishi' {
   export interface Context {
@@ -12,6 +14,8 @@ declare module 'koishi' {
     'disposer/dispose'(source: string | undefined): void;
   }
 }
+
+type Updates = 'apply' | 'unload' | 'dispose' | 'disable'
 
 export class Disposer extends Service {
   notifier: DisposerNotifier;
@@ -46,7 +50,7 @@ export class Disposer extends Service {
       Object.defineProperty(ctx.scope, 'uid', keepVal((ctx.scope.uid))), 'isActive', keepVal(true)
     );
 
-    ctx.on('disposer/dispose', () => this.dispose());
+    ctx.on('disposer/dispose', async () => await this.dispose());
   }
 
   start() {
@@ -58,11 +62,74 @@ export class Disposer extends Service {
     });
   }
 
+  private _logUpdate: { [P in Updates | string]: <T = ForkScope>(scope: T) => T };
 
-  dispose = () => {
+  get logUpdate(): { [P in Updates | string]: <T = ForkScope>(scope: T) => T } {
+    if (this._logUpdate) return this._logUpdate;
+
+    let log = (action: string, fork: ForkScope) => {
+      this.logger.success('%C(%c) %c', fork.runtime.name, fork.key ?? fork.uid ?? fork.runtime.uid ?? 'unknown', action);
+      return fork
+    }
+    return new Proxy(Object.create(null), {
+      get(target, prop) {
+        if (prop in target) return target[prop];
+        return (...args: any[]) => log.apply(this, [prop, ...args]);
+      }
+    });
+  };
+
+  toDispose = (fork: ForkScope) => {
+    if (!fork) return;
+    if (fork.runtime.plugin === null && this.config.keepApp) return
+    if (fork.runtime.name === 'group') fork.dispose();
+
+    const app = this.rScope.ctx
+    if (!app) return
+    try {
+      this.rScope.assertActive()
+    } catch {
+      return
+    }
+
+    if (this.config.disableToo)
+      this.rScope.ensure(async () => {
+        if (fork.uid || !fork.parent.scope[Loader.kRecord]) return;
+        const key = Object.keys(fork.parent.scope[Loader.kRecord]).find(key => {
+          return fork.parent.scope[Loader.kRecord][key] === fork;
+        });
+        this.logUpdate.disable(fork);
+        rename(fork.parent.scope.config, key, '~' + key, fork.parent.scope.config[key]);
+        app.loader.unload(this.logUpdate.unload(fork).ctx, key);
+      });
+
+    this.rScope.ensure(async () => {
+      this.logUpdate.dispose(fork).dispose();
+      if (app.registry)
+        app.registry['_counter'] -= 1
+    });
+  };
+
+  dispose = async (source: any = undefined): Promise<(() => Promise<void>)[]> => {
     const ctx = this.ctx;
     const rScope = this.rScope;
-    const scope = this.scope;
+    const app = rScope.ctx
+
+    let sockets = []
+
+    if (!this.ctx.scope.isActive) return
+
+    if (app.console) {
+      const s = JSON.stringify({
+        type: 'disposer/dispose',
+        data: null
+      })
+
+      sockets = Object.values(app.console.clients).map(client=>client.socket)
+      sockets.forEach(socket => socket.send(s))
+    }
+
+    const tasks: (Promise<any>)[] = []
 
     this.logger.info('root disposing is in progress...');
 
@@ -77,32 +144,37 @@ export class Disposer extends Service {
       if (inst instanceof Lifecycle) {
         this.lifecycle = inst;
         continue;
-      } else if (inst instanceof Context) {} else if (inst[Context.static] instanceof Context) {
+      } else if (context instanceof Context) {} else if (inst[Context.static] instanceof Context) {
         context = inst[Context.static];
         runtime = context.runtime;
         scope = context.scope;
+      } else if (inst instanceof cordis.EffectScope) {
+        context = inst.ctx;
+        runtime = inst.runtime;
+        scope = inst;
+      } else if (inst[Context.current]) {
+        tasks.push(asPromise(() => {
+          const fork = inst[Context.current]?.scope
+          if (!fork) return
+          this.logUpdate.dispose(fork).dispose();
+        }, [], this))
       } else continue;
 
-      if (runtime?.name === 'group') {
-        if (this.config.disableToo)
-          rScope.ensure(async () => {
-            const key = rScope.ctx.loader.keyFor(runtime.plugin);
-            rScope.ctx.loader.unload(rScope.ctx, key);
-          });
-        rScope.ensure(async () => {
-          scope.dispose();
-        });
-      }
-
-      rScope.ensure(async () => {
-        this.logger.info('dispose %c', runtime.name);
-        scope.dispose();
-        runtime.dispose();
-        rScope.ctx.registry.delete(runtime.plugin);
-      });
+      tasks.push(asPromise(this.toDispose, [scope], this));
     }
 
-    rScope.ctx.setTimeout(()=>this.done(), this.config.noLifecycleDelay)
+    app.setTimeout?.(() => this.done(), this.config.noLifecycleDelay);
+
+    tasks.push(asPromise(ctx.root.on, ['internal/fork', this.toDispose], ctx.root.lifecycle))
+
+    const s = JSON.stringify({
+      type: 'disposer/done',
+      data: null
+    })
+
+    sockets.forEach(socket => socket.send(s))
+
+    return await Promise.all(tasks.reverse())
   };
 }
 
@@ -110,6 +182,7 @@ export namespace Disposer {
   export interface Config {
     disableToo: boolean;
     immediately: boolean;
+    keepApp: boolean
     noLifecycleDelay: number;
   }
 
@@ -117,6 +190,7 @@ export namespace Disposer {
     disableToo: Schema.boolean().default(false).description("同时禁用插件").experimental(),
     immediately: Schema.boolean().default(false).description("启动插件即刻开始 dispose, " +
       "关闭即可手动选择 dispose (需要 plugin-notifier)"),
-    noLifecycleDelay: Schema.number().role('time').default(300).description("(毫秒) 过指定时间停止事件系统")
+    keepApp: Schema.boolean().default(false).description('不要 dispose 根上下文 (将会出发全局重载)'),
+    noLifecycleDelay: Schema.number().role('time').default(100).description("(毫秒) 过指定时间停止事件系统")
   });
 }

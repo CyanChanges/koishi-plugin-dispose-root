@@ -1,5 +1,5 @@
-import {Context, Service} from "koishi";
-import {Get} from 'cosmokit'
+import { Context, Service } from "koishi";
+import { Get } from 'cosmokit'
 import NotifierService from "@koishijs/plugin-notifier";
 import type {} from './disposer'
 
@@ -16,9 +16,10 @@ export class DisposerNotifier extends Service {
 
   constructor(protected ctx: Context) {
     super(ctx, 'disposer.notifier', true);
+    this.logger = ctx.logger(this.name)
 
     this.notifier = ctx.notifier.create({
-      type: 'warning'
+      type: 'primary'
     });
   }
 
@@ -28,19 +29,17 @@ export class DisposerNotifier extends Service {
   }
 
   handle() {
-    this.logger.warn('dispose root!')
-    this.ctx.emit('disposer/dispose', 'notifier');
+    this.logger.warn('dispose root!');
+    this.ctx.serial('disposer/dispose', 'notifier').then();
   }
 
   notify() {
-    this.notifier.update(
-      <>
-        <p><small>kp-</small>dispose-root is ready!</p>
-        <p>
-          <button onClick={this.handle}>Dispose now!</button>
-        </p>
-      </>
-    );
+    this.notifier.update(<>
+      <p><small>kp-</small>dispose-root is ready!</p>
+      <p>
+        <button onClick={() => this.handle()}>Dispose now!</button>
+      </p>
+    </>);
   }
 }
 
