@@ -14,7 +14,7 @@ declare global {
   export namespace React {
     export interface DOMAttributes<T> {
       // @ts-ignore
-      onclick?: MouseEventHandler<T> | undefined
+      onclick?: any
     }
   }
 }

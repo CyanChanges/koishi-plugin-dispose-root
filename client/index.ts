@@ -6,6 +6,6 @@ import handler from "./handler";
 export default (ctx: Context) => {
   globalThis.ctx = ctx;
   
-  ctx.plugin(receiver);
-  ctx.plugin(handler);
+  ctx.root.plugin(receiver);
+  ctx.root.plugin(handler);
 }

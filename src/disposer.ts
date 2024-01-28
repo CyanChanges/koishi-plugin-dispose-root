@@ -68,7 +68,7 @@ export class Disposer extends Service {
     if (this._logUpdate) return this._logUpdate;
 
     let log = (action: string, fork: ForkScope) => {
-      this.logger.success('%C(%c) %c', fork.runtime.name, fork.key ?? fork.uid ?? fork.runtime.uid ?? 'unknown', action);
+      this.logger.success('%C(%c) %c', fork.runtime.name ?? 'anonymous', fork.key ?? fork.uid ?? fork.runtime.uid ?? 'unknown', action);
       return fork
     }
     return new Proxy(Object.create(null), {
@@ -110,31 +110,24 @@ export class Disposer extends Service {
     });
   };
 
-  dispose = async (source: any = undefined): Promise<(() => Promise<void>)[]> => {
-    const ctx = this.ctx;
-    const rScope = this.rScope;
-    const app = rScope.ctx
+  disposeContexts = async (app: Context, sockets: WebSocket[]) => {
+    const tasks: (Promise<any>)[] = []
 
-    let sockets = []
-
-    if (!this.ctx.scope.isActive) return
-
-    if (app.console) {
+    tasks.push(asPromise(() => {
       const s = JSON.stringify({
-        type: 'disposer/dispose',
+        type: 'disposer/done',
         data: null
       })
 
-      sockets = Object.values(app.console.clients).map(client=>client.socket)
       sockets.forEach(socket => socket.send(s))
-    }
+    }, []))
 
-    const tasks: (Promise<any>)[] = []
+    tasks.push(asPromise(async () => app['console.writer']?.writeConfig(), []))
 
-    this.logger.info('root disposing is in progress...');
+    this.logger.info('disposing is in progress...');
 
-    for (const data of enumAllEffects(ctx.root)) {
-      let inst = typeof data === 'string' ? ctx.root[data] : data;
+    for (const data of enumAllEffects(app)) {
+      let inst = typeof data === 'string' ? app[data] : data;
       let context: Context | undefined = inst;
       let runtime = context?.runtime;
       let scope = context?.scope;
@@ -165,16 +158,39 @@ export class Disposer extends Service {
 
     app.setTimeout?.(() => this.done(), this.config.noLifecycleDelay);
 
-    tasks.push(asPromise(ctx.root.on, ['internal/fork', this.toDispose], ctx.root.lifecycle))
+    tasks.push(asPromise(app.on, ['internal/fork', this.toDispose], app.lifecycle))
 
     const s = JSON.stringify({
-      type: 'disposer/done',
+      type: 'disposer/dispose',
       data: null
     })
 
     sockets.forEach(socket => socket.send(s))
 
     return await Promise.all(tasks.reverse())
+  }
+
+  dispose = (source: any = undefined): Promise<(() => Promise<void>)[]> => {
+    const rScope = this.rScope;
+    const app = rScope.ctx
+
+    let sockets = []
+
+    if (!this.ctx.scope.isActive) return
+
+    if (app.console) {
+      const s = JSON.stringify({
+        type: 'disposer/before-dispose',
+        data: null
+      })
+
+      sockets = Object.values(app.console.clients).map(client => client.socket)
+      sockets.forEach(socket => socket.send(s))
+    }
+
+    return new Promise(resolve =>
+      app.setTimeout(async () => resolve(await this.disposeContexts(app, sockets)), 0)
+    )
   };
 }
 

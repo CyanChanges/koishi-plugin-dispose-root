@@ -44,5 +44,5 @@ export function rename(object: any, old: string, neo: string, value: any) {
 export const NoThisSymbol = Symbol('aspromise.dont.bind.this')
 
 export function asPromise<T extends (...args) => any>(func: T, args: Parameters<T>, thisParam: ThisParameterType<T> | symbol = NoThisSymbol): Promisify<ReturnType<T>> {
-  return (async (...args) => (this === NoThisSymbol ? func : func.bind(this))(...args)).apply(thisParam, args)
+  return (async (...args) => await (this === NoThisSymbol ? func : func.bind(this))(...args)).apply(thisParam, args)
 }

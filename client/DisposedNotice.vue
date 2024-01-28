@@ -49,7 +49,7 @@ setInterval(() => {
     </div>
     <br>
     <div class="timer-box">
-      <div class="timer">{{ timer }}</div>
+      <div class="timer">Please Vivo 50 in {{ timer }}</div>
     </div>
   </div>
 </template>
@@ -92,9 +92,11 @@ setInterval(() => {
 @keyframes gradientBG {
   0%, 100% {
     background-position: 0% 50%;
+    opacity: 25%;
   }
   65% {
     background-position: 40% 80%;
+    opacity: 70%;
   }
 }
 
@@ -121,6 +123,24 @@ setInterval(() => {
   font-weight: bold;
 }
 
+@keyframes White {
+  0%, 45% {
+    background-color: #0a0a0aaa;
+  }
+  50% {
+    background-color: #0f0f0faa;
+  }
+  60% {
+    background-color: #bababaf0;
+  }
+  80% {
+    background-color: #eeee;
+  }
+  100% {
+    background-color: #fff;
+  }
+}
+
 .backdrop {
   width: 100%;
   height: 100%;
@@ -130,5 +150,6 @@ setInterval(() => {
   backdrop-filter: blur(2px);
   position: absolute;
   z-index: 9999;
+  animation: White 25s ease paused;
 }
 </style>
