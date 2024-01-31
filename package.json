@@ -36,14 +36,14 @@
     "plugin"
   ],
   "devDependencies": {
-    "@koishijs/client": "^5.26.6",
-    "@koishijs/plugin-console": "^5.26.6",
-    "@koishijs/plugin-notifier": "^1.1.2",
+    "@koishijs/client": "^5.27.6",
+    "@koishijs/plugin-console": "^5.27.6",
+    "@koishijs/plugin-notifier": "^1.2.0",
     "@types/react": "^18.2.48"
   },
   "peerDependencies": {
-    "@koishijs/console": "^5.26.6",
-    "koishi": "^4.16.4"
+    "@koishijs/console": "^5.27.6",
+    "koishi": "^4.16.7"
   },
   "peerDependenciesMeta": {
     "@koishijs/plugin-notifier": {

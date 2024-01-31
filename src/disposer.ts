@@ -3,6 +3,7 @@ import { Lifecycle } from "cordis";
 import { Context, Schema, Service, ForkScope, Loader, Awaitable } from "koishi";
 import * as cordis from 'cordis';
 import DisposerNotifier from './notifier';
+import type {} from '@koishijs/console'
 import { promisify } from "node:util";
 
 declare module 'koishi' {
